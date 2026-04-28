@@ -1,10 +1,11 @@
 import type { YieldResult } from '../types';
-import { formatPct, formatUsd } from '../utils/yieldMath';
+import { formatPct, formatUsd, verifyYieldIdentity } from '../utils/yieldMath';
 
 export function SimulationPanel({ result, principal }: { result: YieldResult; principal: number }) {
   const leveragedSupplyContribution = result.supplyApyUsed * result.effectiveLeverage;
   const borrowDragOnEquity = result.borrowCost;
   const annualBorrowDragUsd = principal * result.borrowCost;
+  const mathDelta = verifyYieldIdentity(result);
   return (
     <section className="panel">
       <h3>SIMULATION OUTPUT</h3>
@@ -25,6 +26,9 @@ export function SimulationPanel({ result, principal }: { result: YieldResult; pr
       </div>
       <p className="muted">
         Math check: gross APY = (supply APY × effective leverage) − (borrow APY × (effective leverage − 1)).
+      </p>
+      <p className={mathDelta < 1e-9 ? 'green' : 'red'}>
+        Equation consistency check: {mathDelta < 1e-9 ? 'PASS' : `MISMATCH (${(mathDelta * 100).toFixed(6)} bps)`}
       </p>
       {result.grossApy < 0 ? <p className="red">WARNING: Negative carry. Borrow cost exceeds leveraged supply yield.</p> : null}
     </section>
