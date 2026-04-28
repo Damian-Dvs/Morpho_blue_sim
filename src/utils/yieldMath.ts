@@ -95,3 +95,8 @@ export function computeTvlScenarios(feeApy: number): TvlScenario[] {
 export const formatPct = (v: number): string => `${(v * 100).toFixed(2)}%`;
 export const formatUsd = (v: number): string =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(v);
+
+export function verifyYieldIdentity(result: YieldResult): number {
+  const expected = result.supplyApyUsed * result.effectiveLeverage - result.borrowApyUsed * Math.max(0, result.effectiveLeverage - 1);
+  return Math.abs(expected - result.grossApy);
+}

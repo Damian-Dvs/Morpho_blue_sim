@@ -3,6 +3,7 @@ import { AmountInput } from './components/AmountInput';
 import { Header } from './components/Header';
 import { MarketTable } from './components/MarketTable';
 import { SimulationPanel } from './components/SimulationPanel';
+import { BacktestPanel } from './components/BacktestPanel';
 import { StrategyDashboard } from './components/StrategyDashboard';
 import { StrategySelector } from './components/StrategySelector';
 import { useMorphoMarkets } from './hooks/useMorphoMarkets';
@@ -106,6 +107,7 @@ export default function App() {
 
       <section className="layout-bottom">
         <SimulationPanel result={result} principal={principalUsd} />
+        <BacktestPanel result={result} principal={principalUsd} />
       </section>
     </div>
   );
