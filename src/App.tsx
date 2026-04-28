@@ -5,6 +5,7 @@ import { MarketTable } from './components/MarketTable';
 import { SimulationPanel } from './components/SimulationPanel';
 import { BacktestPanel } from './components/BacktestPanel';
 import { RealFrontendPage } from './components/RealFrontendPage';
+import { ProductionConsole } from './components/ProductionConsole';
 import { StrategyDashboard } from './components/StrategyDashboard';
 import { StrategySelector } from './components/StrategySelector';
 import { useMorphoMarkets } from './hooks/useMorphoMarkets';
@@ -18,7 +19,7 @@ const strategies: Strategy[] = [
 ];
 
 export default function App() {
-  const [page, setPage] = useState<'simulator' | 'frontend'>('simulator');
+  const [page, setPage] = useState<'simulator' | 'automation' | 'frontend'>('simulator');
   const { markets, dataSource, error, updatedAt } = useMorphoMarkets();
   const [principalUsd, setPrincipalUsd] = useState(10_000);
   const [selectedStrategyId, setSelectedStrategyId] = useState<StrategyId>('safe');
@@ -94,7 +95,8 @@ export default function App() {
 
       <section className="panel page-switch">
         <button className={`btn ${page === 'simulator' ? 'selected' : ''}`} onClick={() => setPage('simulator')}>SIMULATOR</button>
-        <button className={`btn ${page === 'frontend' ? 'selected' : ''}`} onClick={() => setPage('frontend')}>REAL FRONTEND GUIDE</button>
+        <button className={`btn ${page === 'automation' ? 'selected' : ''}`} onClick={() => setPage('automation')}>AUTO-REBALANCE CONSOLE</button>
+        <button className={`btn ${page === 'frontend' ? 'selected' : ''}`} onClick={() => setPage('frontend')}>MORPHO FRONTEND GUIDE</button>
       </section>
 
       {page === 'simulator' ? (
@@ -119,6 +121,8 @@ export default function App() {
         <BacktestPanel result={result} principal={principalUsd} />
       </section>
       </>
+      ) : page === 'automation' ? (
+        <ProductionConsole principal={principalUsd} selectedDecision={selectedDecision} selectedMarket={selectedMarket} />
       ) : (
         <RealFrontendPage selectedDecision={selectedDecision} selectedMarket={selectedMarket} />
       )}

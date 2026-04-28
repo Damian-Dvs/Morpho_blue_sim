@@ -105,3 +105,46 @@ input[type='range'] { width: 100%; accent-color: var(--green); }
 .page-switch .btn {
   min-width: 180px;
 }
+
+.exec-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.exec-grid label {
+  border: 1px solid var(--border);
+  padding: 8px;
+  font-size: 12px;
+}
+
+.log-box {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  padding: 10px;
+  max-height: 220px;
+  overflow: auto;
+  background: #0b0b0b;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.guide-card {
+  border: 1px solid var(--border);
+  padding: 10px;
+  background: #0d0d0d;
+}
+
+.guide-card h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+@media (max-width: 1000px) {
+  .exec-grid, .card-grid { grid-template-columns: 1fr; }
+}

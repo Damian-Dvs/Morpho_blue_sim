@@ -6,67 +6,83 @@ interface Props {
   selectedMarket: Market;
 }
 
-const flow = [
-  '1) Pull live market + user position state',
-  '2) Build action bundle (repay / withdraw / supply / borrow)',
-  '3) Simulate post-trade leverage + liquidation buffer',
-  '4) Enforce guardrails (min APY delta, max slippage, max gas)',
-  '5) Sign and submit transaction bundle',
-  '6) Re-read chain state and store an audit record',
+const architecture = [
+  {
+    title: 'Portfolio Intelligence',
+    text: 'Continuously fetch Morpho market state + wallet position state, then rank routes (single vs multi-market).',
+  },
+  {
+    title: 'Risk Engine',
+    text: 'Before every rebalance, enforce health buffer, slippage budget, stale-oracle checks, and max position-size rules.',
+  },
+  {
+    title: 'Execution Layer',
+    text: 'Build transaction bundles and submit via direct wallet signature or delegated relay policy.',
+  },
+  {
+    title: 'Audit Layer',
+    text: 'Persist decisions, signed payloads, and outcomes for user transparency and incident review.',
+  },
 ];
 
-const guards = [
-  'Health factor / liquidation buffer threshold',
-  'Borrow utilization + liquidity depth checks',
-  'Oracle freshness and stale price protection',
-  'Cooldown period to avoid over-trading',
-  'Net benefit after gas + swap + bridge costs',
+const userSafetyRules = [
+  'Never execute if net expected edge (after fees + gas) is negative.',
+  'Use a mandatory cooldown after each rebalance to avoid churn.',
+  'Cap leverage by policy lower than protocol hard limits.',
+  'Block actions when oracle updates are stale or abnormal.',
+  'Always preview expected post-trade liquidation buffer before signing.',
 ];
 
 export function RealFrontendPage({ selectedDecision, selectedMarket }: Props) {
   return (
     <section className="panel">
-      <h3>REAL MORPHO FRONT END (NO NEW SMART CONTRACTS)</h3>
+      <h3>MORPHO BLUE — PRODUCTION FRONTEND BLUEPRINT</h3>
+      <p className="muted" style={{ marginBottom: 10 }}>
+        Morpho Blue lets you build advanced UX without deploying your own protocol contracts. You orchestrate user-authorized actions over existing markets.
+      </p>
 
       <div className="metrics">
         <div>
-          <span>Will rebalancing be automatic?</span>
-          <strong>No, not by default.</strong>
-          <p className="muted">Every rebalance is an on-chain transaction. A user wallet signature (or delegated automation) is required.</p>
+          <span>Do users need to sign rebalances?</span>
+          <strong>Yes (default path).</strong>
+          <p className="muted">Auto-rebalancing requires delegated permissions/session policies, otherwise every rebalance needs a signature.</p>
         </div>
         <div>
-          <span>Do users need to sign?</span>
-          <strong>Yes, unless delegated.</strong>
-          <p className="muted">You can support one-click UX with signatures + relayers, but execution still needs valid authorization.</p>
+          <span>Can this run fully automatic?</span>
+          <strong>Yes, with a relay policy.</strong>
+          <p className="muted">Use a backend relay only after explicit user consent and strict policy constraints.</p>
         </div>
         <div>
-          <span>Current selected route</span>
+          <span>Selected strategy route</span>
           <strong>{selectedDecision ? selectedDecision.mode.toUpperCase() : 'N/A'} · {selectedMarket.loanAssetSymbol}/{selectedMarket.collateralAssetSymbol}</strong>
-          <p className="muted">Model net APY: {selectedDecision ? formatPct(selectedDecision.result.netApy) : 'N/A'}.</p>
+          <p className="muted">Current model net APY: {selectedDecision ? formatPct(selectedDecision.result.netApy) : 'N/A'}.</p>
         </div>
         <div>
-          <span>How Morpho Blue works (simple)</span>
-          <strong>Permissionless isolated markets.</strong>
-          <p className="muted">Each market has its own collateral + loan asset + LLTV + oracle/IRM config. Your UI composes actions on top.</p>
+          <span>What is Morpho Blue?</span>
+          <strong>Isolated lending markets.</strong>
+          <p className="muted">Markets are defined by collateral, loan asset, LLTV, oracle, and IRM. Your app chooses and executes actions safely.</p>
         </div>
       </div>
 
-      <h3 style={{ marginTop: 12 }}>REBALANCE EXECUTOR FLOW</h3>
-      <ul>
-        {flow.map((item) => (
-          <li key={item} className="muted" style={{ marginBottom: 6 }}>{item}</li>
+      <h3 style={{ marginTop: 14 }}>APP ARCHITECTURE</h3>
+      <div className="card-grid">
+        {architecture.map((item) => (
+          <article className="guide-card" key={item.title}>
+            <h4>{item.title}</h4>
+            <p className="muted">{item.text}</p>
+          </article>
         ))}
-      </ul>
+      </div>
 
-      <h3 style={{ marginTop: 12 }}>RECOMMENDED SAFETY GUARDS</h3>
+      <h3 style={{ marginTop: 14 }}>NON-NEGOTIABLE USER SAFETY RULES</h3>
       <ul>
-        {guards.map((item) => (
-          <li key={item} className="muted" style={{ marginBottom: 6 }}>{item}</li>
+        {userSafetyRules.map((rule) => (
+          <li key={rule} className="muted" style={{ marginBottom: 6 }}>{rule}</li>
         ))}
       </ul>
 
       <p className="amber" style={{ marginTop: 10 }}>
-        Production note: auto-rebalancing without user signatures requires explicit delegated permissions (session keys / automation service) and strict risk limits.
+        Security posture: default to manual signing, make automation opt-in, and expose every guard + policy to the user in plain language.
       </p>
     </section>
   );
