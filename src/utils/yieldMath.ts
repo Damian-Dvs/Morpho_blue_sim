@@ -1,6 +1,6 @@
 import type { Market, Strategy, TvlScenario, YieldResult } from '../types';
 
-export const PERFORMANCE_FEE = 0.1;
+export const PERFORMANCE_FEE = 0;
 
 export function wadToDecimal(value: string | number | null | undefined): number {
   if (value === null || value === undefined) return 0;
@@ -34,10 +34,23 @@ export function computeGrossApy(supplyApy: number, borrowApy: number, leverage: 
   return supplyApy * leverage - borrowApy * (leverage - 1);
 }
 
+function chooseTargetLeverage(market: Market, strategy: Strategy, maxAllowed: number): number {
+  if (strategy.id === 'safe') return 1;
+
+  const maxByStrategy = Math.min(strategy.maxLeverage, maxAllowed);
+  if (maxByStrategy <= 1) return 1;
+
+  const carryIsPositive = market.supplyApy > market.borrowApy;
+  if (!carryIsPositive) return 1;
+
+  return 1 + (maxByStrategy - 1) * strategy.utilization;
+}
+
 export function computeYield(market: Market, strategy: Strategy, principalUsd: number): YieldResult {
   const maxAllowed = market.maxLeverage * 0.95;
-  const effectiveLeverage = Math.min(strategy.leverage, maxAllowed);
-  const capped = effectiveLeverage < strategy.leverage;
+  const targetLeverage = chooseTargetLeverage(market, strategy, maxAllowed);
+  const effectiveLeverage = Math.min(targetLeverage, maxAllowed);
+  const capped = effectiveLeverage < targetLeverage;
 
   const grossApy = computeGrossApy(market.supplyApy, market.borrowApy, effectiveLeverage);
   const netApy = grossApy * (1 - PERFORMANCE_FEE);
@@ -56,6 +69,7 @@ export function computeYield(market: Market, strategy: Strategy, principalUsd: n
     yearlyEarnings,
     feeYearlyEarnings,
     effectiveLeverage,
+    targetLeverage,
     borrowCost: market.borrowApy * Math.max(0, effectiveLeverage - 1),
     capped,
   };

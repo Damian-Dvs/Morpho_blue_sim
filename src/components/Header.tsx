@@ -7,7 +7,7 @@ export function Header({ dataSource }: Props) {
     <header className="header panel">
       <div>
         <h1>MORPHO BLUE YIELD SIMULATOR</h1>
-        <p className="muted">USDC LOOP STRATEGY ECONOMICS • FRONTEND FEE MODEL @ 10%</p>
+        <p className="muted">USDC LOOP STRATEGY EXPLORER • MARKET SELECTION + LEVERAGE DECISIONING</p>
       </div>
       <div className="header-status">
         <div className={`status-dot ${dataSource === 'live' ? 'live' : 'fallback'}`} />

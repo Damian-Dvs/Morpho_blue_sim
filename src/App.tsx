@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react';
 import { AmountInput } from './components/AmountInput';
-import { FeeEconomics } from './components/FeeEconomics';
 import { Header } from './components/Header';
 import { MarketTable } from './components/MarketTable';
 import { SimulationPanel } from './components/SimulationPanel';
+import { StrategyDashboard } from './components/StrategyDashboard';
 import { StrategySelector } from './components/StrategySelector';
-import { TVLScenario } from './components/TVLScenario';
 import { useMorphoMarkets } from './hooks/useMorphoMarkets';
-import type { Strategy, StrategyId } from './types';
-import { computeTvlScenarios, computeYield } from './utils/yieldMath';
+import type { Strategy, StrategyDecision, StrategyId } from './types';
+import { computeYield } from './utils/yieldMath';
 
 const strategies: Strategy[] = [
-  { id: 'safe', label: 'SAFE', leverage: 1, description: 'No loop. Minimal liquidation surface.', riskColor: '--blue' },
-  { id: 'balanced', label: 'BALANCED', leverage: 2, description: '2x loop for better carry / moderate risk.', riskColor: '--amber' },
-  { id: 'degen', label: 'DEGEN', leverage: 3.5, description: 'Aggressive loop. Highest sensitivity to borrow swings.', riskColor: '--red' },
+  { id: 'safe', label: 'SAFE', maxLeverage: 1, utilization: 0, description: 'No loop. Minimal liquidation surface.', riskColor: '--blue' },
+  { id: 'balanced', label: 'BALANCED', maxLeverage: 3, utilization: 0.65, description: 'Adaptive loop. Scales up only when carry is positive.', riskColor: '--amber' },
+  { id: 'degen', label: 'DEGEN', maxLeverage: 5, utilization: 0.9, description: 'High-risk adaptive loop. Pushes closer to LLTV limits.', riskColor: '--red' },
 ];
 
 export default function App() {
@@ -21,7 +20,6 @@ export default function App() {
   const [principalUsd, setPrincipalUsd] = useState(10_000);
   const [selectedStrategyId, setSelectedStrategyId] = useState<StrategyId>('safe');
   const [selectedMarketKey, setSelectedMarketKey] = useState('');
-  const [tvlScenarioIndex, setTvlScenarioIndex] = useState(2);
 
   useEffect(() => {
     if (!selectedMarketKey && markets.length > 0) {
@@ -29,10 +27,25 @@ export default function App() {
     }
   }, [markets, selectedMarketKey]);
 
+  const decisions: StrategyDecision[] = strategies.map((strategy) => {
+    const ranked = markets
+      .map((market) => ({ market, result: computeYield(market, strategy, principalUsd) }))
+      .sort((a, b) => b.result.netApy - a.result.netApy);
+
+    const best = ranked[0];
+    return { strategy, market: best.market, result: best.result };
+  });
+
+  useEffect(() => {
+    const chosen = decisions.find((d) => d.strategy.id === selectedStrategyId);
+    if (chosen && chosen.market.uniqueKey !== selectedMarketKey) {
+      setSelectedMarketKey(chosen.market.uniqueKey);
+    }
+  }, [decisions, selectedStrategyId, selectedMarketKey]);
+
   const selectedMarket = markets.find((m) => m.uniqueKey === selectedMarketKey) ?? markets[0];
   const selectedStrategy = strategies.find((s) => s.id === selectedStrategyId) ?? strategies[0];
   const result = selectedMarket ? computeYield(selectedMarket, selectedStrategy, principalUsd) : null;
-  const scenarios = result ? computeTvlScenarios(result.feeApy) : [];
 
   if (!selectedMarket || !result) return null;
 
@@ -49,12 +62,16 @@ export default function App() {
         <MarketTable markets={markets} selectedKey={selectedMarket.uniqueKey} onSelect={setSelectedMarketKey} />
       </section>
 
+      <StrategyDashboard
+        decisions={decisions}
+        selectedStrategyId={selectedStrategyId}
+        onSelectStrategy={setSelectedStrategyId}
+        onSelectMarket={setSelectedMarketKey}
+      />
+
       <section className="layout-bottom">
         <SimulationPanel result={result} />
-        <FeeEconomics result={result} principal={principalUsd} />
       </section>
-
-      <TVLScenario scenarios={scenarios} index={Math.min(tvlScenarioIndex, scenarios.length - 1)} onIndex={setTvlScenarioIndex} />
     </div>
   );
 }

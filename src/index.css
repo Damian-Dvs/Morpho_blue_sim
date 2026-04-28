@@ -40,7 +40,7 @@ h1,h3 { margin: 0 0 8px; font-size: 16px; letter-spacing: .04em; }
 .status-dot.fallback { background: var(--amber); }
 @keyframes blink { 50% { opacity: .35; } }
 .layout-top { display: grid; grid-template-columns: 380px 1fr; gap: 12px; }
-.layout-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.layout-bottom { display: grid; grid-template-columns: 1fr; gap: 12px; }
 .left-col { display: flex; flex-direction: column; }
 .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .data-table th, .data-table td { border: 1px solid var(--border); padding: 8px; text-align: left; }
