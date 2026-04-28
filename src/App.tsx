@@ -124,7 +124,14 @@ export default function App() {
       ) : page === 'automation' ? (
         <ProductionConsole principal={principalUsd} selectedDecision={selectedDecision} selectedMarket={selectedMarket} />
       ) : (
-        <RealFrontendPage selectedDecision={selectedDecision} selectedMarket={selectedMarket} />
+        <RealFrontendPage
+          principalUsd={principalUsd}
+          decisions={decisions}
+          selectedDecision={selectedDecision}
+          selectedStrategyId={selectedStrategyId}
+          onSelectStrategy={setSelectedStrategyId}
+          selectedMarket={selectedMarket}
+        />
       )}
     </div>
   );
