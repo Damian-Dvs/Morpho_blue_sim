@@ -36,6 +36,8 @@ export interface YieldResult {
   targetLeverage: number;
   borrowCost: number;
   capped: boolean;
+  supplyApyUsed: number;
+  borrowApyUsed: number;
 }
 
 export interface TvlScenario {
@@ -45,6 +47,10 @@ export interface TvlScenario {
 
 export interface StrategyDecision {
   strategy: Strategy;
-  market: Market;
+  mode: 'single' | 'multi';
+  supplyMarket: Market;
+  borrowMarket: Market;
   result: YieldResult;
+  bestSingleResult: YieldResult;
+  bestMultiResult: YieldResult;
 }

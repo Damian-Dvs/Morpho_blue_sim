@@ -7,6 +7,7 @@ export function useMorphoMarkets() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<'live' | 'fallback'>('fallback');
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -18,11 +19,13 @@ export function useMorphoMarkets() {
         setMarkets(next);
         setDataSource('live');
         setError(null);
+        setUpdatedAt(new Date());
       } catch (e) {
         if (!alive) return;
         setMarkets(fallbackMarkets);
         setDataSource('fallback');
         setError(e instanceof Error ? e.message : 'Unknown error');
+        setUpdatedAt(new Date());
       } finally {
         if (alive) setLoading(false);
       }
@@ -36,5 +39,5 @@ export function useMorphoMarkets() {
     };
   }, []);
 
-  return { markets, loading, error, dataSource };
+  return { markets, loading, error, dataSource, updatedAt };
 }

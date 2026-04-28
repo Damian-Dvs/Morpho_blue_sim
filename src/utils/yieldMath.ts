@@ -34,25 +34,31 @@ export function computeGrossApy(supplyApy: number, borrowApy: number, leverage: 
   return supplyApy * leverage - borrowApy * (leverage - 1);
 }
 
-function chooseTargetLeverage(market: Market, strategy: Strategy, maxAllowed: number): number {
+function chooseTargetLeverageFromRates(supplyApy: number, borrowApy: number, strategy: Strategy, maxAllowed: number): number {
   if (strategy.id === 'safe') return 1;
 
   const maxByStrategy = Math.min(strategy.maxLeverage, maxAllowed);
   if (maxByStrategy <= 1) return 1;
 
-  const carryIsPositive = market.supplyApy > market.borrowApy;
+  const carryIsPositive = supplyApy > borrowApy;
   if (!carryIsPositive) return 1;
 
   return 1 + (maxByStrategy - 1) * strategy.utilization;
 }
 
-export function computeYield(market: Market, strategy: Strategy, principalUsd: number): YieldResult {
-  const maxAllowed = market.maxLeverage * 0.95;
-  const targetLeverage = chooseTargetLeverage(market, strategy, maxAllowed);
+export function computeYieldFromRates(
+  supplyApy: number,
+  borrowApy: number,
+  maxLeverage: number,
+  strategy: Strategy,
+  principalUsd: number
+): YieldResult {
+  const maxAllowed = maxLeverage * 0.95;
+  const targetLeverage = chooseTargetLeverageFromRates(supplyApy, borrowApy, strategy, maxAllowed);
   const effectiveLeverage = Math.min(targetLeverage, maxAllowed);
   const capped = effectiveLeverage < targetLeverage;
 
-  const grossApy = computeGrossApy(market.supplyApy, market.borrowApy, effectiveLeverage);
+  const grossApy = computeGrossApy(supplyApy, borrowApy, effectiveLeverage);
   const netApy = grossApy * (1 - PERFORMANCE_FEE);
   const feeApy = grossApy * PERFORMANCE_FEE;
 
@@ -70,9 +76,15 @@ export function computeYield(market: Market, strategy: Strategy, principalUsd: n
     feeYearlyEarnings,
     effectiveLeverage,
     targetLeverage,
-    borrowCost: market.borrowApy * Math.max(0, effectiveLeverage - 1),
+    borrowCost: borrowApy * Math.max(0, effectiveLeverage - 1),
     capped,
+    supplyApyUsed: supplyApy,
+    borrowApyUsed: borrowApy,
   };
+}
+
+export function computeYield(market: Market, strategy: Strategy, principalUsd: number): YieldResult {
+  return computeYieldFromRates(market.supplyApy, market.borrowApy, market.maxLeverage, strategy, principalUsd);
 }
 
 export function computeTvlScenarios(feeApy: number): TvlScenario[] {

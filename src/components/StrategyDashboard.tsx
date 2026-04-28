@@ -16,35 +16,46 @@ export function StrategyDashboard({ decisions, selectedStrategyId, onSelectStrat
         <thead>
           <tr>
             <th>STRATEGY</th>
-            <th>SELECTED MARKET</th>
+            <th>MODE</th>
+            <th>SUPPLY MARKET</th>
+            <th>BORROW MARKET</th>
             <th>TARGET LEV</th>
             <th>EFFECTIVE LEV</th>
             <th>GROSS APY</th>
+            <th>SINGLE APY</th>
+            <th>MULTI APY</th>
             <th>YEARLY P&L / $10K</th>
           </tr>
         </thead>
         <tbody>
-          {decisions.map(({ strategy, market, result }) => (
+          {decisions.map(({ strategy, supplyMarket, borrowMarket, mode, result, bestSingleResult, bestMultiResult }) => (
             <tr
               key={strategy.id}
               className={selectedStrategyId === strategy.id ? 'selected' : ''}
               onClick={() => {
                 onSelectStrategy(strategy.id);
-                onSelectMarket(market.uniqueKey);
+                onSelectMarket(supplyMarket.uniqueKey);
               }}
             >
               <td>{strategy.label}</td>
-              <td>{market.loanAssetSymbol}/{market.collateralAssetSymbol}</td>
+              <td>{mode.toUpperCase()}</td>
+              <td>{supplyMarket.loanAssetSymbol}/{supplyMarket.collateralAssetSymbol}</td>
+              <td>{borrowMarket.loanAssetSymbol}/{borrowMarket.collateralAssetSymbol}</td>
               <td>{result.targetLeverage.toFixed(2)}x</td>
               <td>{result.effectiveLeverage.toFixed(2)}x {result.capped ? '(CAPPED)' : ''}</td>
               <td className={result.grossApy < 0 ? 'red' : 'green'}>{formatPct(result.grossApy)}</td>
+              <td>{formatPct(bestSingleResult.netApy)}</td>
+              <td>{formatPct(bestMultiResult.netApy)}</td>
               <td className={result.yearlyEarnings < 0 ? 'red' : 'green'}>{formatUsd(result.yearlyEarnings)}</td>
             </tr>
           ))}
         </tbody>
       </table>
       <p className="muted">
-        Ranking rule: for each strategy, scan all pulled USDC markets and pick the market with highest net APY after strategy constraints.
+        Ranking rule: for each strategy, compare best single-market loop vs best cross-market (supply market + borrow market) loop, then pick the higher net APY.
+      </p>
+      <p className="muted">
+        Borrow market quality filter: prioritize markets with borrow TVL &gt; $1M and borrow APY &gt; 0.25% to avoid zero-borrow ghost routes.
       </p>
     </section>
   );

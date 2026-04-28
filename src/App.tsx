@@ -7,7 +7,7 @@ import { StrategyDashboard } from './components/StrategyDashboard';
 import { StrategySelector } from './components/StrategySelector';
 import { useMorphoMarkets } from './hooks/useMorphoMarkets';
 import type { Strategy, StrategyDecision, StrategyId } from './types';
-import { computeYield } from './utils/yieldMath';
+import { computeYield, computeYieldFromRates } from './utils/yieldMath';
 
 const strategies: Strategy[] = [
   { id: 'safe', label: 'SAFE', maxLeverage: 1, utilization: 0, description: 'No loop. Minimal liquidation surface.', riskColor: '--blue' },
@@ -16,7 +16,7 @@ const strategies: Strategy[] = [
 ];
 
 export default function App() {
-  const { markets, dataSource, error } = useMorphoMarkets();
+  const { markets, dataSource, error, updatedAt } = useMorphoMarkets();
   const [principalUsd, setPrincipalUsd] = useState(10_000);
   const [selectedStrategyId, setSelectedStrategyId] = useState<StrategyId>('safe');
   const [selectedMarketKey, setSelectedMarketKey] = useState('');
@@ -28,30 +28,65 @@ export default function App() {
   }, [markets, selectedMarketKey]);
 
   const decisions: StrategyDecision[] = strategies.map((strategy) => {
-    const ranked = markets
+    const singleRanked = markets
       .map((market) => ({ market, result: computeYield(market, strategy, principalUsd) }))
       .sort((a, b) => b.result.netApy - a.result.netApy);
 
-    const best = ranked[0];
-    return { strategy, market: best.market, result: best.result };
+    const bestSingle = singleRanked[0];
+    let bestMulti = {
+      supplyMarket: bestSingle.market,
+      borrowMarket: bestSingle.market,
+      result: bestSingle.result,
+    };
+
+    const borrowCandidates = markets.filter((m) => m.totalBorrowUsd > 1_000_000 && m.borrowApy > 0.0025);
+    const usableBorrowMarkets = borrowCandidates.length > 0 ? borrowCandidates : markets;
+
+    for (const supplyMarket of markets) {
+      for (const borrowMarket of usableBorrowMarkets) {
+        const maxLeverage = Math.min(supplyMarket.maxLeverage, borrowMarket.maxLeverage);
+        const result = computeYieldFromRates(
+          supplyMarket.supplyApy,
+          borrowMarket.borrowApy,
+          maxLeverage,
+          strategy,
+          principalUsd
+        );
+        if (result.netApy > bestMulti.result.netApy) {
+          bestMulti = { supplyMarket, borrowMarket, result };
+        }
+      }
+    }
+
+    const useMulti = bestMulti.result.netApy > bestSingle.result.netApy;
+    return {
+      strategy,
+      mode: useMulti ? 'multi' : 'single',
+      supplyMarket: useMulti ? bestMulti.supplyMarket : bestSingle.market,
+      borrowMarket: useMulti ? bestMulti.borrowMarket : bestSingle.market,
+      result: useMulti ? bestMulti.result : bestSingle.result,
+      bestSingleResult: bestSingle.result,
+      bestMultiResult: bestMulti.result,
+    };
   });
 
   useEffect(() => {
     const chosen = decisions.find((d) => d.strategy.id === selectedStrategyId);
-    if (chosen && chosen.market.uniqueKey !== selectedMarketKey) {
-      setSelectedMarketKey(chosen.market.uniqueKey);
+    if (chosen && chosen.supplyMarket.uniqueKey !== selectedMarketKey) {
+      setSelectedMarketKey(chosen.supplyMarket.uniqueKey);
     }
   }, [decisions, selectedStrategyId, selectedMarketKey]);
 
   const selectedMarket = markets.find((m) => m.uniqueKey === selectedMarketKey) ?? markets[0];
   const selectedStrategy = strategies.find((s) => s.id === selectedStrategyId) ?? strategies[0];
-  const result = selectedMarket ? computeYield(selectedMarket, selectedStrategy, principalUsd) : null;
+  const selectedDecision = decisions.find((d) => d.strategy.id === selectedStrategyId);
+  const result = selectedDecision?.result ?? (selectedMarket ? computeYield(selectedMarket, selectedStrategy, principalUsd) : null);
 
   if (!selectedMarket || !result) return null;
 
   return (
     <div className="app">
-      <Header dataSource={dataSource} />
+      <Header dataSource={dataSource} updatedAt={updatedAt} />
       {error ? <p className="panel amber">API issue: {error}. Using fallback market snapshot.</p> : null}
 
       <section className="layout-top">
@@ -70,7 +105,7 @@ export default function App() {
       />
 
       <section className="layout-bottom">
-        <SimulationPanel result={result} />
+        <SimulationPanel result={result} principal={principalUsd} />
       </section>
     </div>
   );
