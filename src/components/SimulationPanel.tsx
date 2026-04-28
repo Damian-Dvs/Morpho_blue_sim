@@ -1,7 +1,8 @@
 import type { YieldResult } from '../types';
 import { formatPct, formatUsd } from '../utils/yieldMath';
 
-export function SimulationPanel({ result }: { result: YieldResult }) {
+export function SimulationPanel({ result, principal }: { result: YieldResult; principal: number }) {
+  const annualBorrowDragUsd = principal * result.borrowCost;
   return (
     <section className="panel">
       <h3>SIMULATION OUTPUT</h3>
@@ -11,6 +12,7 @@ export function SimulationPanel({ result }: { result: YieldResult }) {
         <div><span>Supply APY used</span><strong>{formatPct(result.supplyApyUsed)}</strong></div>
         <div><span>Borrow APY used</span><strong>{formatPct(result.borrowApyUsed)}</strong></div>
         <div><span>Borrow drag</span><strong>{formatPct(result.borrowCost)}</strong></div>
+        <div><span>Annual borrow drag ($)</span><strong>{formatUsd(annualBorrowDragUsd)}</strong></div>
         <div><span>Effective leverage</span><strong>{result.effectiveLeverage.toFixed(2)}x {result.capped ? '(CAPPED)' : ''}</strong></div>
         <div><span>Strategy target leverage</span><strong>{result.targetLeverage.toFixed(2)}x</strong></div>
         <div><span>Daily</span><strong>{formatUsd(result.dailyEarnings)}</strong></div>

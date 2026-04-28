@@ -16,7 +16,7 @@ const strategies: Strategy[] = [
 ];
 
 export default function App() {
-  const { markets, dataSource, error } = useMorphoMarkets();
+  const { markets, dataSource, error, updatedAt } = useMorphoMarkets();
   const [principalUsd, setPrincipalUsd] = useState(10_000);
   const [selectedStrategyId, setSelectedStrategyId] = useState<StrategyId>('safe');
   const [selectedMarketKey, setSelectedMarketKey] = useState('');
@@ -39,8 +39,11 @@ export default function App() {
       result: bestSingle.result,
     };
 
+    const borrowCandidates = markets.filter((m) => m.totalBorrowUsd > 1_000_000 && m.borrowApy > 0.0025);
+    const usableBorrowMarkets = borrowCandidates.length > 0 ? borrowCandidates : markets;
+
     for (const supplyMarket of markets) {
-      for (const borrowMarket of markets) {
+      for (const borrowMarket of usableBorrowMarkets) {
         const maxLeverage = Math.min(supplyMarket.maxLeverage, borrowMarket.maxLeverage);
         const result = computeYieldFromRates(
           supplyMarket.supplyApy,
@@ -83,7 +86,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <Header dataSource={dataSource} />
+      <Header dataSource={dataSource} updatedAt={updatedAt} />
       {error ? <p className="panel amber">API issue: {error}. Using fallback market snapshot.</p> : null}
 
       <section className="layout-top">
@@ -102,7 +105,7 @@ export default function App() {
       />
 
       <section className="layout-bottom">
-        <SimulationPanel result={result} />
+        <SimulationPanel result={result} principal={principalUsd} />
       </section>
     </div>
   );

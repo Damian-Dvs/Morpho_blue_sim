@@ -54,6 +54,9 @@ export function StrategyDashboard({ decisions, selectedStrategyId, onSelectStrat
       <p className="muted">
         Ranking rule: for each strategy, compare best single-market loop vs best cross-market (supply market + borrow market) loop, then pick the higher net APY.
       </p>
+      <p className="muted">
+        Borrow market quality filter: prioritize markets with borrow TVL &gt; $1M and borrow APY &gt; 0.25% to avoid zero-borrow ghost routes.
+      </p>
     </section>
   );
 }

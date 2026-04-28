@@ -1,8 +1,9 @@
 interface Props {
   dataSource: 'live' | 'fallback';
+  updatedAt: Date | null;
 }
 
-export function Header({ dataSource }: Props) {
+export function Header({ dataSource, updatedAt }: Props) {
   return (
     <header className="header panel">
       <div>
@@ -12,7 +13,7 @@ export function Header({ dataSource }: Props) {
       <div className="header-status">
         <div className={`status-dot ${dataSource === 'live' ? 'live' : 'fallback'}`} />
         <span>{dataSource === 'live' ? 'LIVE API' : 'FALLBACK DATA'}</span>
-        <span className="muted">{new Date().toUTCString()}</span>
+        <span className="muted">Last refresh: {updatedAt ? updatedAt.toUTCString() : 'waiting...'}</span>
       </div>
     </header>
   );
