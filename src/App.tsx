@@ -3,6 +3,8 @@ import { AmountInput } from './components/AmountInput';
 import { Header } from './components/Header';
 import { MarketTable } from './components/MarketTable';
 import { SimulationPanel } from './components/SimulationPanel';
+import { BacktestPanel } from './components/BacktestPanel';
+import { RealFrontendPage } from './components/RealFrontendPage';
 import { StrategyDashboard } from './components/StrategyDashboard';
 import { StrategySelector } from './components/StrategySelector';
 import { useMorphoMarkets } from './hooks/useMorphoMarkets';
@@ -16,6 +18,7 @@ const strategies: Strategy[] = [
 ];
 
 export default function App() {
+  const [page, setPage] = useState<'simulator' | 'frontend'>('simulator');
   const { markets, dataSource, error, updatedAt } = useMorphoMarkets();
   const [principalUsd, setPrincipalUsd] = useState(10_000);
   const [selectedStrategyId, setSelectedStrategyId] = useState<StrategyId>('safe');
@@ -89,6 +92,13 @@ export default function App() {
       <Header dataSource={dataSource} updatedAt={updatedAt} />
       {error ? <p className="panel amber">API issue: {error}. Using fallback market snapshot.</p> : null}
 
+      <section className="panel page-switch">
+        <button className={`btn ${page === 'simulator' ? 'selected' : ''}`} onClick={() => setPage('simulator')}>SIMULATOR</button>
+        <button className={`btn ${page === 'frontend' ? 'selected' : ''}`} onClick={() => setPage('frontend')}>REAL FRONTEND GUIDE</button>
+      </section>
+
+      {page === 'simulator' ? (
+      <>
       <section className="layout-top">
         <div className="left-col">
           <AmountInput value={principalUsd} onChange={setPrincipalUsd} />
@@ -106,7 +116,12 @@ export default function App() {
 
       <section className="layout-bottom">
         <SimulationPanel result={result} principal={principalUsd} />
+        <BacktestPanel result={result} principal={principalUsd} />
       </section>
+      </>
+      ) : (
+        <RealFrontendPage selectedDecision={selectedDecision} selectedMarket={selectedMarket} />
+      )}
     </div>
   );
 }
