@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { MarketTable } from './components/MarketTable';
 import { SimulationPanel } from './components/SimulationPanel';
 import { BacktestPanel } from './components/BacktestPanel';
+import { MultiPoolSimulator } from './components/MultiPoolSimulator';
 import { RealFrontendPage } from './components/RealFrontendPage';
 import { ProductionConsole } from './components/ProductionConsole';
 import { StrategyDashboard } from './components/StrategyDashboard';
@@ -116,6 +117,8 @@ export default function App() {
         onSelectMarket={setSelectedMarketKey}
       />
 
+      <MultiPoolSimulator markets={markets} strategy={selectedStrategy} principalUsd={principalUsd} />
+
       <section className="layout-bottom">
         <SimulationPanel result={result} principal={principalUsd} />
         <BacktestPanel result={result} principal={principalUsd} />
@@ -124,7 +127,14 @@ export default function App() {
       ) : page === 'automation' ? (
         <ProductionConsole principal={principalUsd} selectedDecision={selectedDecision} selectedMarket={selectedMarket} />
       ) : (
-        <RealFrontendPage selectedDecision={selectedDecision} selectedMarket={selectedMarket} />
+        <RealFrontendPage
+          principalUsd={principalUsd}
+          decisions={decisions}
+          selectedDecision={selectedDecision}
+          selectedStrategyId={selectedStrategyId}
+          onSelectStrategy={setSelectedStrategyId}
+          selectedMarket={selectedMarket}
+        />
       )}
     </div>
   );
