@@ -11,9 +11,9 @@ import type { Strategy, StrategyId } from './types';
 import { computeTvlScenarios, computeYield } from './utils/yieldMath';
 
 const strategies: Strategy[] = [
-  { id: 'safe', label: 'SAFE', leverage: 1, description: 'No loop. Minimal liquidation surface.', riskColor: '--blue' },
-  { id: 'balanced', label: 'BALANCED', leverage: 2, description: '2x loop for better carry / moderate risk.', riskColor: '--amber' },
-  { id: 'degen', label: 'DEGEN', leverage: 3.5, description: 'Aggressive loop. Highest sensitivity to borrow swings.', riskColor: '--red' },
+  { id: 'safe', label: 'SAFE', maxLeverage: 1, utilization: 0, description: 'No loop. Minimal liquidation surface.', riskColor: '--blue' },
+  { id: 'balanced', label: 'BALANCED', maxLeverage: 3, utilization: 0.65, description: 'Adaptive loop. Scales up only when carry is positive.', riskColor: '--amber' },
+  { id: 'degen', label: 'DEGEN', maxLeverage: 5, utilization: 0.9, description: 'High-risk adaptive loop. Pushes closer to LLTV limits.', riskColor: '--red' },
 ];
 
 export default function App() {

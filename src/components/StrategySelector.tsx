@@ -19,7 +19,7 @@ export function StrategySelector({ strategies, selected, onSelect }: Props) {
         >
           <div className="row between">
             <span>{s.label}</span>
-            <span>{s.leverage.toFixed(1)}x</span>
+            <span>up to {s.maxLeverage.toFixed(1)}x</span>
           </div>
           <p className="muted">{s.description}</p>
         </button>

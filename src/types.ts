@@ -17,7 +17,8 @@ export type StrategyId = 'safe' | 'balanced' | 'degen';
 export interface Strategy {
   id: StrategyId;
   label: string;
-  leverage: number;
+  maxLeverage: number;
+  utilization: number;
   description: string;
   riskColor: string;
 }
@@ -32,6 +33,7 @@ export interface YieldResult {
   yearlyEarnings: number;
   feeYearlyEarnings: number;
   effectiveLeverage: number;
+  targetLeverage: number;
   borrowCost: number;
   capped: boolean;
 }

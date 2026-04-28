@@ -10,6 +10,7 @@ export function SimulationPanel({ result }: { result: YieldResult }) {
         <div><span>Net APY (after 10% fee)</span><strong className={result.netApy < 0 ? 'red' : 'green'}>{formatPct(result.netApy)}</strong></div>
         <div><span>Borrow drag</span><strong>{formatPct(result.borrowCost)}</strong></div>
         <div><span>Effective leverage</span><strong>{result.effectiveLeverage.toFixed(2)}x {result.capped ? '(CAPPED)' : ''}</strong></div>
+        <div><span>Strategy target leverage</span><strong>{result.targetLeverage.toFixed(2)}x</strong></div>
         <div><span>Daily</span><strong>{formatUsd(result.dailyEarnings)}</strong></div>
         <div><span>Weekly</span><strong>{formatUsd(result.weeklyEarnings)}</strong></div>
         <div><span>Monthly</span><strong>{formatUsd(result.monthlyEarnings)}</strong></div>
