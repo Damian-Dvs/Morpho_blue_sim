@@ -2,11 +2,31 @@ import type { Market, Strategy, TvlScenario, YieldResult } from '../types';
 
 export const PERFORMANCE_FEE = 0.1;
 
-export function wadToDecimal(wad: string): number {
+export function wadToDecimal(value: string | number | null | undefined): number {
+  if (value === null || value === undefined) return 0;
+
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) return 0;
+    return Math.abs(value) > 1 ? value / 1e18 : value;
+  }
+
+  const text = String(value).trim();
+  if (!text) return 0;
+
+  if (text.includes('.') || text.toLowerCase().includes('e')) {
+    const parsed = Number(text);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
   try {
-    return Number(BigInt(wad)) / 1e18;
+    const bi = BigInt(text);
+    if (text.length > 15) {
+      return Number(bi) / 1e18;
+    }
+    return Number(bi);
   } catch {
-    return 0;
+    const parsed = Number(text);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 }
 

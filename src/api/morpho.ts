@@ -4,9 +4,8 @@ import { wadToDecimal } from '../utils/yieldMath';
 const QUERY = `
 query GetUSDCMarkets {
   markets(
-    first: 12,
-    where: { loanAssetSymbol_in: ["USDC"] },
-    orderBy: SupplyApy,
+    first: 50,
+    orderBy: SupplyAssetsUsd,
     orderDirection: Desc
   ) {
     items {
@@ -17,8 +16,8 @@ query GetUSDCMarkets {
         borrowApy
         netSupplyApy
         netBorrowApy
-        totalSupplyUsd
-        totalBorrowUsd
+        supplyAssetsUsd
+        borrowAssetsUsd
       }
       loanAsset { symbol }
       collateralAsset { symbol }
@@ -37,8 +36,8 @@ const parseMarket = (m: any): Market => {
     borrowApy: wadToDecimal(m.state.borrowApy),
     netSupplyApy: wadToDecimal(m.state.netSupplyApy),
     netBorrowApy: wadToDecimal(m.state.netBorrowApy),
-    totalSupplyUsd: Number(m.state.totalSupplyUsd ?? 0),
-    totalBorrowUsd: Number(m.state.totalBorrowUsd ?? 0),
+    totalSupplyUsd: Number(m.state.supplyAssetsUsd ?? m.state.totalSupplyUsd ?? 0),
+    totalBorrowUsd: Number(m.state.borrowAssetsUsd ?? m.state.totalBorrowUsd ?? 0),
     loanAssetSymbol: m.loanAsset.symbol,
     collateralAssetSymbol: m.collateralAsset.symbol,
   };
@@ -52,25 +51,51 @@ export const fallbackMarkets: Market[] = [
   { uniqueKey: 'usdc-reth', lltv: 0.77, maxLeverage: 4.35, supplyApy: 0.049, borrowApy: 0.059, netSupplyApy: 0.046, netBorrowApy: 0.062, totalSupplyUsd: 28_000_000, totalBorrowUsd: 14_000_000, loanAssetSymbol: 'USDC', collateralAssetSymbol: 'rETH' },
 ];
 
-export async function fetchMorphoMarkets(): Promise<Market[]> {
-  const endpoints = ['https://blue-api.morpho.org/graphql', '/morpho/graphql'];
+const ENDPOINTS = ['/api/morpho', 'https://blue-api.morpho.org/graphql'];
 
-  for (const endpoint of endpoints) {
+export async function fetchMorphoMarkets(): Promise<Market[]> {
+  let lastError = 'Unable to fetch Morpho markets';
+
+  for (const endpoint of ENDPOINTS) {
     try {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: QUERY }),
       });
-      if (!res.ok) continue;
+
+      if (!res.ok) {
+        lastError = `HTTP ${res.status} from ${endpoint}`;
+        continue;
+      }
+
       const json = await res.json();
+
+      if (Array.isArray(json?.errors) && json.errors.length > 0) {
+        const first = json.errors[0]?.message ?? 'GraphQL error';
+        lastError = `${endpoint}: ${first}`;
+        continue;
+      }
+
       const items = json?.data?.markets?.items;
       if (Array.isArray(items) && items.length > 0) {
-        return items.map(parseMarket);
+        const usdcItems = items
+          .filter((item: any) => item?.loanAsset?.symbol === "USDC")
+          .slice(0, 12);
+
+        if (usdcItems.length > 0) {
+          return usdcItems.map(parseMarket);
+        }
+
+        lastError = `${endpoint}: query returned no USDC markets`;
+        continue;
       }
-    } catch {
-      // try next endpoint
+
+      lastError = `${endpoint}: no market items returned`;
+    } catch (error) {
+      lastError = error instanceof Error ? `${endpoint}: ${error.message}` : `${endpoint}: unknown error`;
     }
   }
-  throw new Error('Unable to fetch Morpho markets');
+
+  throw new Error(lastError);
 }
