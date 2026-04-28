@@ -96,3 +96,12 @@ input[type='range'] { width: 100%; accent-color: var(--green); }
 @media (max-width: 1000px) {
   .backtest-controls { grid-template-columns: 1fr; }
 }
+
+.page-switch {
+  display: flex;
+  gap: 8px;
+}
+
+.page-switch .btn {
+  min-width: 180px;
+}
